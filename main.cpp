@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <random>
 
 using namespace std;
 
@@ -88,10 +89,28 @@ int main() {
     double asianPayoff = asianOption.calculatePayoff(priceHistory);
     double lookbackPayoff = lookbackOption.calculatePayoff(priceHistory);
 
-    std::cout << "European Option Payoff: " << europeanPayoff << std::endl;
-    std::cout << "American Option Payoff: " << americanPayoff << std::endl;
-    std::cout << "Average Price Asian Option Payoff: " << asianPayoff << std::endl;
-    std::cout << "Lookback Option Payoff: " << lookbackPayoff << std::endl;
+    int numSimulations = 10000; // Number of Monte Carlo simulations
+    double totalPayoff = 0.0;
+
+    random_device rd;
+    std::mt19937 gen(rd());
+    std::normal_distribution<double> dist(0.0, 1.0);
+
+    for (int i = 0; i < numSimulations; ++i) {
+        double simulatedPrice = stockPrice * exp(0.1 - 0.2 * 0.2 / 2 + 0.2 * dist(gen)); // Geometric Brownian Motion
+        double payoff = europeanOption.calculatePayoff(simulatedPrice);
+        totalPayoff += payoff;
+    }
+
+    double optionValue = (totalPayoff / numSimulations) * exp(-0.1 * europeanOption.getExpirationDate());
+
+    std::cout << "Monte Carlo European Option Value: " << optionValue << std::endl;
+
+
+    //std::cout << "European Option Payoff: " << europeanPayoff << std::endl;
+    //std::cout << "American Option Payoff: " << americanPayoff << std::endl;
+    //std::cout << "Average Price Asian Option Payoff: " << asianPayoff << std::endl;
+    //std::cout << "Lookback Option Payoff: " << lookbackPayoff << std::endl;
 
     return 0;
 }
