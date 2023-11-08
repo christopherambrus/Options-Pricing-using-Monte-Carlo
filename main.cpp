@@ -2,78 +2,15 @@
 #include <vector>
 #include <algorithm>
 #include <random>
+#include <cmath>
+#include "OptionContract.h"
+#include "EuropeanOption.h"
+#include "AmericanOption.h"
+#include "ExoticOption.h"
+#include "AveragePriceAsianOption.h"
+#include "LookbackOption.h"
 
 using namespace std;
-
-class OptionContract {
-public:
-    OptionContract(double strikePrice, double expirationDate) : strikePrice_(strikePrice), expirationDate_(expirationDate) {}
-
-    virtual double calculatePayoff(double stockPrice) const { return 0;}
-
-    double getStrikePrice() const {
-        return strikePrice_;
-    }
-
-    double getExpirationDate() const {
-        return expirationDate_;
-    }
-
-protected:
-    double strikePrice_;
-    double expirationDate_;
-};
-
-class EuropeanOption : public OptionContract {
-public:
-    EuropeanOption(double strikePrice, double expirationDate) : OptionContract(strikePrice, expirationDate) {}
-
-    double calculatePayoff(double stockPrice) const override {
-        return std::max(0.0, stockPrice - getStrikePrice());
-    }
-};
-
-class AmericanOption : public OptionContract {
-public:
-    AmericanOption(double strikePrice, double expirationDate) : OptionContract(strikePrice, expirationDate) {}
-
-    double calculatePayoff(double stockPrice) const override {
-        return std::max(0.0, stockPrice - getStrikePrice());
-    }
-};
-
-class ExoticOption : public OptionContract {
-public:
-    ExoticOption(double strikePrice, double expirationDate) : OptionContract(strikePrice, expirationDate) {}
-
-    virtual double calculatePayoff(const std::vector<double>& priceHistory) const = 0;
-    
-};
-
-class AveragePriceAsianOption : public ExoticOption {
-public:
-    AveragePriceAsianOption(double strikePrice, double expirationDate) : ExoticOption(strikePrice, expirationDate) {}
-
-    double calculatePayoff(const std::vector<double>& priceHistory) const override {
-        double sum = 0.0;
-        for (double price : priceHistory) {
-            sum += price;
-        }
-        double averagePrice = sum / priceHistory.size();
-        return std::max(0.0, averagePrice - getStrikePrice());
-    }
-};
-
-class LookbackOption : public ExoticOption {
-public:
-    LookbackOption(double strikePrice, double expirationDate) : ExoticOption(strikePrice, expirationDate) {}
-
-    double calculatePayoff(const std::vector<double>& priceHistory) const override {
-        double minPrice = *std::min_element(priceHistory.begin(), priceHistory.end());
-        double maxPrice = *std::max_element(priceHistory.begin(), priceHistory.end());
-        return std::max(maxPrice - minPrice, 0.0);
-    }
-};
 
 int main() {
     EuropeanOption europeanOption(100.0, 1.0);
@@ -102,10 +39,36 @@ int main() {
         totalPayoff += payoff;
     }
 
-    double optionValue = (totalPayoff / numSimulations) * exp(-0.1 * europeanOption.getExpirationDate());
+    double europeanOptionValue = (totalPayoff / numSimulations) * exp(-0.1 * europeanOption.getExpirationDate());
 
-    std::cout << "Monte Carlo European Option Value: " << optionValue << std::endl;
+    std::cout << "Monte Carlo European Option Value: " << europeanOptionValue << std::endl;
 
+    totalPayoff = 0.0;
+
+    // Monte Carlo simulation for American Option using Longstaff-Schwartz
+    for (int i = 0; i < numSimulations; ++i) {
+        double currentPrice = stockPrice;
+        double payoff = 0.0;
+
+        for (double t = 0; t < americanOption.getExpirationDate(); t += 1.0 / 252.0) {
+            double simulatedPrice = currentPrice * exp(0.1 - 0.2 * 0.2 / 2 + 0.2 * dist(gen));
+            double optionPayoff = americanOption.calculatePayoff(simulatedPrice);
+            
+            if (americanOption.isAmerican()) {
+                payoff = std::max(optionPayoff, payoff);
+            } else {
+                payoff = optionPayoff;
+            }
+
+            currentPrice = simulatedPrice;
+        }
+
+        totalPayoff += payoff;
+    }
+
+    double americanOptionValue = (totalPayoff / numSimulations) * exp(-0.1 * americanOption.getExpirationDate());
+
+    std::cout << "Monte Carlo American Option Value: " << americanOptionValue << std::endl;
 
     //std::cout << "European Option Payoff: " << europeanPayoff << std::endl;
     //std::cout << "American Option Payoff: " << americanPayoff << std::endl;
