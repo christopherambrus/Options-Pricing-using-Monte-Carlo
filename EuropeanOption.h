@@ -8,6 +8,7 @@ class EuropeanOption : public OptionContract {
 public:
     EuropeanOption(double strikePrice, double expirationDate);
     double calculatePayoff(double stockPrice) const override;
+    double calculatePutPayoff(double stockPrice) const override;
 };
 
 #endif

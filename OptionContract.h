@@ -7,6 +7,7 @@ public:
     OptionContract(double strikePrice, double expirationDate);
 
     virtual double calculatePayoff(double stockPrice) const;
+    virtual double calculatePutPayoff(double stockPrice) const;
     double getStrikePrice() const;
     double getExpirationDate() const;
     virtual bool isAmerican() const;

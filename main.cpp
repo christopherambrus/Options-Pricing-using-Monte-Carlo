@@ -18,7 +18,7 @@ int main() {
     AveragePriceAsianOption asianOption(100.0, 1.0);
     LookbackOption lookbackOption(100.0, 1.0);
 
-    std::vector<double> priceHistory = {95.0, 105.0, 110.0, 90.0, 115.0, 120.0, 110.0, 122.0}; // Example price history
+    std::vector<double> priceHistory = {97.0, 101.0, 110.0, 90.0, 115.0, 120.0, 110.0, 122.0}; // Example price history
     double stockPrice = priceHistory.back(); // Current stock price at expiration
 
     double europeanPayoff = europeanOption.calculatePayoff(stockPrice);
@@ -41,7 +41,13 @@ int main() {
 
     double europeanOptionValue = (totalPayoff / numSimulations) * exp(-0.1 * europeanOption.getExpirationDate());
 
-    std::cout << "Monte Carlo European Option Value: " << europeanOptionValue << std::endl;
+    std::cout << "Monte Carlo European Call Option Value: " << europeanOptionValue << std::endl;
+
+    double totalPutPayoff = std::max(0.0, -totalPayoff / numSimulations);
+
+    double europeanPutOptionValue = totalPutPayoff * exp(-0.1 * europeanOption.getExpirationDate());
+
+    std::cout << "Monte Carlo European Put Option Value: " << europeanPutOptionValue << std::endl;
 
     double lookbackOptionValue = 0.0;
 

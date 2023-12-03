@@ -4,6 +4,8 @@ OptionContract::OptionContract(double strikePrice, double expirationDate) : stri
 
 double OptionContract::calculatePayoff(double stockPrice) const { return 0;}
 
+double OptionContract::calculatePutPayoff(double stockPrice) const { return 0;}
+
 double OptionContract::getStrikePrice() const {
     return strikePrice;
 }
