@@ -18,7 +18,7 @@ int main() {
     AveragePriceAsianOption asianOption(100.0, 1.0);
     LookbackOption lookbackOption(100.0, 1.0);
 
-    std::vector<double> priceHistory = {95.0, 105.0, 110.0, 90.0, 115.0}; // Example price history
+    std::vector<double> priceHistory = {95.0, 105.0, 110.0, 90.0, 115.0, 120.0, 110.0, 122.0}; // Example price history
     double stockPrice = priceHistory.back(); // Current stock price at expiration
 
     double europeanPayoff = europeanOption.calculatePayoff(stockPrice);
@@ -26,7 +26,7 @@ int main() {
     double asianPayoff = asianOption.calculatePayoff(priceHistory);
     double lookbackPayoff = lookbackOption.calculatePayoff(priceHistory);
 
-    int numSimulations = 10000; // Number of Monte Carlo simulations
+    int numSimulations = 100000; // Number of Monte Carlo simulations
     double totalPayoff = 0.0;
 
     random_device rd;
@@ -34,7 +34,7 @@ int main() {
     std::normal_distribution<double> dist(0.0, 1.0);
 
     for (int i = 0; i < numSimulations; ++i) {
-        double simulatedPrice = stockPrice * exp(0.1 - 0.2 * 0.2 / 2 + 0.2 * dist(gen)); // Geometric Brownian Motion
+        double simulatedPrice = stockPrice * exp(0.1 - 0.2 * 0.2 / 2 + 0.2 * dist(gen)); //Geometric Brownian Motion = 0.2 / 2 + 0.2
         double payoff = europeanOption.calculatePayoff(simulatedPrice);
         totalPayoff += payoff;
     }
@@ -43,32 +43,45 @@ int main() {
 
     std::cout << "Monte Carlo European Option Value: " << europeanOptionValue << std::endl;
 
-    totalPayoff = 0.0;
+    double lookbackOptionValue = 0.0;
 
-    // Monte Carlo simulation for American Option using Longstaff-Schwartz
     for (int i = 0; i < numSimulations; ++i) {
-        double currentPrice = stockPrice;
-        double payoff = 0.0;
+        vector<double> simulatedPrices;
+        double discountedPayoff = 0.0;
 
-        for (double t = 0; t < americanOption.getExpirationDate(); t += 1.0 / 252.0) {
-            double simulatedPrice = currentPrice * exp(0.1 - 0.2 * 0.2 / 2 + 0.2 * dist(gen));
-            double optionPayoff = americanOption.calculatePayoff(simulatedPrice);
-            
-            if (americanOption.isAmerican()) {
-                payoff = std::max(optionPayoff, payoff);
-            } else {
-                payoff = optionPayoff;
-            }
-
-            currentPrice = simulatedPrice;
+        for (double t = 0; t < lookbackOption.getExpirationDate(); t += 1.0 / 252.0) {  //Number of trading days in a year = 252
+            double currentPrice = priceHistory.back();
+            double simulatedPrice = currentPrice * exp(0.1 - 0.2 * 0.2 / 2 + 0.2 * dist(gen)); //Drift(riskfree rate) = 0.1, Volatility = 0.2
+            simulatedPrices.push_back(simulatedPrice);
         }
 
-        totalPayoff += payoff;
+        double optionPayoff = lookbackOption.calculatePayoff(simulatedPrices);
+        lookbackOptionValue += optionPayoff * exp(-0.1 * lookbackOption.getExpirationDate());
     }
 
-    double americanOptionValue = (totalPayoff / numSimulations) * exp(-0.1 * americanOption.getExpirationDate());
+    lookbackOptionValue /= numSimulations;
 
-    std::cout << "Monte Carlo American Option Value: " << americanOptionValue << std::endl;
+    cout << "Monte Carlo Lookback Option Value: " << lookbackOptionValue << endl;
+
+    double asianOptionValue = 0.0;
+
+    for (int i = 0; i < numSimulations; ++i) {
+        vector<double> simulatedPrices;
+        double discountedPayoff = 0.0;
+
+        for (double t = 0; t < asianOption.getExpirationDate(); t += 1.0 / 252.0) {
+            double currentPrice = priceHistory.back();
+            double simulatedPrice = currentPrice * exp(0.1 - 0.2 * 0.2 / 2 + 0.2 * dist(gen));
+            simulatedPrices.push_back(simulatedPrice);
+        }
+
+        double optionPayoff = asianOption.calculatePayoff(simulatedPrices);
+        asianOptionValue += optionPayoff * exp(-0.1 * asianOption.getExpirationDate());
+    }
+
+    asianOptionValue /= numSimulations;
+
+    cout << "Monte Carlo Asian Option Value: " << asianOptionValue << endl;
 
     //std::cout << "European Option Payoff: " << europeanPayoff << std::endl;
     //std::cout << "American Option Payoff: " << americanPayoff << std::endl;
