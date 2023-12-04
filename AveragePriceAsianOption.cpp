@@ -1,7 +1,8 @@
 #include "AveragePriceAsianOption.h"
 #include <algorithm>
 
-AveragePriceAsianOption::AveragePriceAsianOption(double strikePrice, double expirationDate) : ExoticOption(strikePrice, expirationDate) {}
+AveragePriceAsianOption::AveragePriceAsianOption(double strikePrice, double expirationDate) : 
+ExoticOption(strikePrice, expirationDate) {}
 
 double AveragePriceAsianOption::calculatePayoff(const std::vector<double>& priceHistory) const {
     double sum = 0.0;

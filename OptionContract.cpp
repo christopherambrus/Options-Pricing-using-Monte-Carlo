@@ -1,6 +1,7 @@
 #include "OptionContract.h"
 
-OptionContract::OptionContract(double strikePrice, double expirationDate) : strikePrice(strikePrice), expirationDate(expirationDate) {}
+OptionContract::OptionContract(double strikePrice, double expirationDate) : 
+strikePrice(strikePrice), expirationDate(expirationDate) {}
 
 double OptionContract::calculatePayoff(double stockPrice) const { return 0;}
 
